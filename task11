@@ -1,0 +1,43 @@
+import cv2
+import numpy as np
+
+# Загрузка изображения
+image = cv2.imread("/Users/pawwience/Downloads/Безымянный2.jpg")
+
+if image is None:
+    print("Ошибка: изображение не загружено. Проверь путь к файлу.")
+    exit()
+
+# Размытие
+blurred = cv2.GaussianBlur(image, (11, 11), 0)
+
+# Перевод в HSV
+hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+
+# Диапазон синего
+blue_min = np.array([100, 150, 50], np.uint8)
+blue_max = np.array([140, 255, 255], np.uint8)
+blue_mask = cv2.inRange(hsv, blue_min, blue_max)
+
+# Контуры
+blue_contours, blue_hierarchy = cv2.findContours(
+    blue_mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+)
+
+if blue_hierarchy is not None:
+    for i, contour in enumerate(blue_contours):
+        if blue_hierarchy[0][i][3] == -1:  # внешний контур
+            # Минимальная окружность
+            (x, y), radius = cv2.minEnclosingCircle(contour)
+            center = (int(x), int(y))
+
+            # Отметить центр красной точкой
+            cv2.circle(image, center, 4, (0, 0, 255), -1)
+
+            # Обвести контур
+            cv2.drawContours(image, [contour], -1, (255, 0, 0), 3)
+
+# Показ результата
+cv2.imshow("Result", image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
